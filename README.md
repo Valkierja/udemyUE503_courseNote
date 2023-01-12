@@ -16,3 +16,11 @@ postBuffer可以調整更大一些, 如果你的項目有更大的文件存在
 [https]                                                                                                                        
   postBuffer = 524288000                                                                                                  
   proxy = socks5://127.0.0.1:10808                                                                                ~                                         
+
+# implementation of a bp-callable function
+just declare like
+```
+	UFUNCTION(BlueprintCallable)
+	void openLobby();
+
+```
