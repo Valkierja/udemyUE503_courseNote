@@ -7,7 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-
+#include "Kismet/GameplayStatics.h"
 //////////////////////////////////////////////////////////////////////////
 // Atest_muti_4Character
 
@@ -97,6 +97,26 @@ void Atest_muti_4Character::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+
+void Atest_muti_4Character::openLobby()
+{
+	if(auto World=GetWorld())
+		World->ServerTravel("World'/Game/ThirdPerson/Maps/Lobby.Lobby'?listen");
+}
+
+void Atest_muti_4Character::CallOpenLevel(const FString& Address)
+{
+	UGameplayStatics::OpenLevel(this, FName(*Address));
+}
+
+void Atest_muti_4Character::CallClientTravel(const FString& Address)
+{
+	auto PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+	if (PlayerController)
+	{
+		PlayerController->ClientTravel(Address,TRAVEL_Absolute);
+	}
 }
 
 void Atest_muti_4Character::MoveForward(float Value)

@@ -26,3 +26,7 @@ just declare like
 	void openLobby();
 
 ```
+
+# find a build-in function's .h include file
+
+just search in offical doc

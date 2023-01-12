@@ -20,11 +20,18 @@ class Atest_muti_4Character : public ACharacter
 	class UCameraComponent* FollowCamera;
 public:
 	Atest_muti_4Character();
-
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
+	
+	UFUNCTION(BlueprintCallable)
+	void openLobby();
 
+	UFUNCTION(BlueprintCallable)
+	void CallOpenLevel(const FString& Address);
+	
+	UFUNCTION(BlueprintCallable)
+	void CallClientTravel(const FString& Address);
 protected:
 
 	/** Called for forwards/backward input */
