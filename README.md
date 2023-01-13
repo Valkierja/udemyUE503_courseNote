@@ -164,3 +164,49 @@ SteamDevAppId=480
 NetConnectionClassName="OnlineSubsystemSteam.SteamNetConnection"
 ```
 
+另外需要注意的一点是, 在编辑器中的游戏是预览版, 无法连接至steam api
+
+# TSharedPtr的一个未遇到的问题
+
+在一些写于UE5.0.0的教程中, 需要这样定义一个onlineInterface
+
+```cpp
+class IOnlineSessionPtr OnlineSessionInterface;
+```
+
+但是似乎在5.0.3中不能这样写
+
+![image-20230113195249159](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131952225.png)
+
+必须要把elaborated type specifier去除
+
+报错提示为: already typedef-ed
+
+看起来十分矛盾
+
+# 打印 steam连接 debug log
+
+```cpp
+GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Blue,
+				FString::Printf(TEXT("Found Online subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
+			);
+```
+
+# 如何让win10原始账户获取C盘完全访问权
+
+由于UE5默认放在C盘, 有的时候会没有权限操作
+
+对于专业版win10解决办法很简单
+
+gpedit.msc打开策略组
+
+禁用这两个东西
+
+![image-20230113233437808](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301132335862.png)
+
+重启
+
+非专业版请自行搜索解决

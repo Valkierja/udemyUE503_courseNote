@@ -8,6 +8,8 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "OnlineSubsystem.h"
+#include "Kismet/ImportanceSamplingLibrary.h"
 //////////////////////////////////////////////////////////////////////////
 // Atest_muti_4Character
 
@@ -44,11 +46,25 @@ Atest_muti_4Character::Atest_muti_4Character()
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	if (auto OnlineSubsystem = IOnlineSubsystem::Get())
+	{
+		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Blue,
+				FString::Printf(TEXT("Found Online subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
+			);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -102,7 +118,7 @@ void Atest_muti_4Character::LookUpAtRate(float Rate)
 //my code
 void Atest_muti_4Character::openLobby()
 {
-	if(auto World=GetWorld())
+	if (auto World = GetWorld())
 		World->ServerTravel("/Game/ThirdPerson/Maps/Lobby?listen");
 }
 
@@ -115,7 +131,6 @@ void Atest_muti_4Character::CallClientTravel(const FString& Address)
 {
 	if (auto PlayerController = GetGameInstance()->GetFirstLocalPlayerController())
 		PlayerController->ClientTravel(Address, TRAVEL_Absolute);
-	
 }
 
 void Atest_muti_4Character::MoveForward(float Value)
@@ -134,12 +149,12 @@ void Atest_muti_4Character::MoveForward(float Value)
 
 void Atest_muti_4Character::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
+
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
