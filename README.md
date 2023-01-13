@@ -123,3 +123,44 @@ ClientTravel里面自行调用了getWorld,因为他是作用于Actor
 
 源代码似乎是这样的意思,但是具体还是不太看得懂
 
+
+
+# 添加steam网络连接插件到build文件中
+
+首先在插件里面enable online subsystem steam插件
+
+然后再游戏源码里面 .build.cs文件中
+
+加入public dependency
+
+![image-20230113175045140](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131750229.png)
+
+![image-20230113175145966](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131751998.png)
+
+这里需要添加两个插件 这两个插件是完全不同的, 是两个不同的抽象层, 我们只需要对Onlinesubsystem抽象层负责, 该抽象层需要对OnlinesubsystemSteam负责, 而后者需要对steam服务器层负责
+
+
+
+然后打开defaultEngin.ini
+
+添加:(自行去除注释, 那些注释是非法内容(中文))
+
+```
+[/Script/Engine.GameEngine]//加入特定网络环境需要的驱动文件, 提示编译器需要将其编入
++NetDriverDefinitions=(DefName="GameNetDriver",DriverClassName="OnlineSubsystemSteam.SteamNetDriver",DriverClassNameFallback="OnlineSubsystemUtils.IpNetDriver")
+
+[OnlineSubsystem]//定义添加的网络环境
+DefaultPlatformService=Steam
+
+
+[OnlineSubsystemSteam]
+bEnabled=true//启动该网路环境, 使其合法
+SteamDevAppId=480
+
+; If using Sessions
+; bInitServerOnClient=true
+
+[/Script/OnlineSubsystemSteam.SteamNetDriver]
+NetConnectionClassName="OnlineSubsystemSteam.SteamNetConnection"
+```
+
