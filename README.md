@@ -80,3 +80,46 @@ ADD: if there were 2 listening instances and 2 performing linking instances,  li
 ![image-20230113163710426](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131637484.png)
 
 ![image-20230113163741690](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131637757.png)
+
+
+
+# 为什么 openlevel需要传入context this指针而ClientTravel不需要传入
+
+我猜测可能是和所在类有关的
+
+ClientTravel是playerController的成员函数
+
+而openlevel是UBlueprintFunctionLibrary的派生类UGameplayStatics的成员函数
+
+ClientTravel里面自行调用了getWorld,因为他是作用于Actor
+
+而openlevel从源代码上来看, 似乎是可以作用于一般性obj的(但我没做过实际测试) 
+
+![image-20230113164740023](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131647060.png)
+
+所以前者不需要传入this指针,因为在函数内会自动getworld操作
+
+但是后者需要传入一个指针,然后验证其是否存在于一个合法的world
+
+# getWorld源码解析
+
+`GetWorldFromContextObject` 和getWorld都会调用 getlevel
+
+但是getlevel没太看懂, 似乎意味着UE4引擎底层允许level的嵌套, 类似链表那样
+
+最外层的level定义为 world
+
+但是我这边没找到如何嵌套两层以上level的办法,似乎在引擎中的正常做法就是一层level+一层world,顶层的level又称作world
+
+![image-20230113170344755](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131703782.png)
+
+![image-20230113170354887](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131703917.png)
+
+![image-20230113170519288](https://raw.githubusercontent.com/KSroido/ALLPIC/main/img/202301131705337.png)
+
+另外actor和obj的底层区别在world层面也是存在的, 但是还看不太懂, 似乎普通的obj只可能存在于一层或两层的level中
+
+而actor可以存在于任意深的level
+
+源代码似乎是这样的意思,但是具体还是不太看得懂
+
