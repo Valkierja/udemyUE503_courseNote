@@ -99,10 +99,11 @@ void Atest_muti_4Character::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
+//my code
 void Atest_muti_4Character::openLobby()
 {
 	if(auto World=GetWorld())
-		World->ServerTravel("World'/Game/ThirdPerson/Maps/Lobby.Lobby'?listen");
+		World->ServerTravel("/Game/ThirdPerson/Maps/Lobby?listen");
 }
 
 void Atest_muti_4Character::CallOpenLevel(const FString& Address)
@@ -112,11 +113,9 @@ void Atest_muti_4Character::CallOpenLevel(const FString& Address)
 
 void Atest_muti_4Character::CallClientTravel(const FString& Address)
 {
-	auto PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
-	if (PlayerController)
-	{
-		PlayerController->ClientTravel(Address,TRAVEL_Absolute);
-	}
+	if (auto PlayerController = GetGameInstance()->GetFirstLocalPlayerController())
+		PlayerController->ClientTravel(Address, TRAVEL_Absolute);
+	
 }
 
 void Atest_muti_4Character::MoveForward(float Value)
