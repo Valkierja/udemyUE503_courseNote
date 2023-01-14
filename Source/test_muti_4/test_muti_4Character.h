@@ -5,7 +5,13 @@
 #include "CoreMinimal.h"
 #include "OnlineSubsystem.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
+#include "MyUtility/MyLOG.h"
+//TODO: always make sure generated.h is below every include
 #include "test_muti_4Character.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogOnlineSubsystemSteam, Log, All)
 
 UCLASS(config=Game)
 class Atest_muti_4Character : public ACharacter
@@ -73,6 +79,15 @@ public:
 // onlie session
 public:
 	// Pointer to the online session interface 
-	IOnlineSessionPtr OnlineSessionInterface;
+	 IOnlineSessionPtr OnlineSessionInterface;
+
+protected://TODO: WHY protected
+	UFUNCTION(BlueprintCallable)
+	void CreateGameSession();
+
+	//callback
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+private:
+	 FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 };
 

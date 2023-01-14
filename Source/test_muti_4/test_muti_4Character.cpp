@@ -10,10 +10,18 @@
 #include "Kismet/GameplayStatics.h"
 #include "OnlineSubsystem.h"
 #include "Kismet/ImportanceSamplingLibrary.h"
+#include "MyUtility/MyLOG.h"
 //////////////////////////////////////////////////////////////////////////
-// Atest_muti_4Character
+///
 
-Atest_muti_4Character::Atest_muti_4Character()
+// Atest_muti_4Character
+DEFINE_LOG_CATEGORY(LogOnlineSubsystemSteam);
+
+Atest_muti_4Character::Atest_muti_4Character():
+	CreateSessionCompleteDelegate(
+		FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete))
+//@param userClass
+//@param callBackFunctionPointer
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -55,15 +63,9 @@ Atest_muti_4Character::Atest_muti_4Character()
 	if (auto OnlineSubsystem = IOnlineSubsystem::Get())
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.f,
-				FColor::Blue,
-				FString::Printf(TEXT("Found Online subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
-			);
-		}
+		MyLOG::ScreenLog(OnlineSubsystem->GetSubsystemName().ToString());
+		UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Found Online subsystem %s"),
+		       *OnlineSubsystem->GetSubsystemName().ToString());
 	}
 }
 
@@ -91,6 +93,50 @@ void Atest_muti_4Character::SetupPlayerInputComponent(class UInputComponent* Pla
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &Atest_muti_4Character::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &Atest_muti_4Character::TouchStopped);
+}
+
+void Atest_muti_4Character::CreateGameSession()
+{
+	//will call when pressing the 1 key
+	if (OnlineSessionInterface == nullptr)
+	{
+		UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is NULLptr in CreateGameSession."))
+		return;
+	}
+	if (!OnlineSessionInterface.IsValid())
+	{
+		UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))
+		return;
+	}
+	if (auto ExistSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession) != nullptr)
+	{
+		UE_LOG(LogOnlineSubsystemSteam, Warning,
+		       TEXT("OnlineSessionInterface: Session HAVE existed, it may indicate a muti-thread problem."))
+		OnlineSessionInterface->DestroySession(NAME_GameSession);
+	}
+	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	SessionSettings->bIsLANMatch = false;
+	SessionSettings->NumPublicConnections = 4;
+	SessionSettings->bAllowJoinInProgress = true;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bShouldAdvertise = true;
+	SessionSettings->bUsesPresence = true;
+	OnlineSessionInterface->CreateSession(*GetWorld()->GetFirstLocalPlayerFromController()->GetPreferredUniqueNetId(),
+	                                      NAME_GameSession, *SessionSettings);
+}
+
+void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
+	}
+	else
+	{
+		UE_LOG(LogOnlineSubsystemSteam, Warning,
+		       TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));
+	}
 }
 
 void Atest_muti_4Character::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
