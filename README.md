@@ -245,3 +245,25 @@ gpedit.msc打开策略组
 在UE中 ThisClass是一个保留字, 用来指代当前所在文件
 
 比如, 如果你在角色蓝图对应的cpp文件里面, 这个保留字就相当于角色类
+
+
+
+
+
+# 在屏幕上添加debug信息
+
+```cpp
+if (GEngine){//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
+	GEngine->AddOnScreenDebugMessage(
+		-1,//暂时不清楚作用
+		15.f,//消息持续时间
+		FColor::Blue,//消息颜色
+		FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
+		//Printf的函数签名返回值类型不是void 而是FString
+		//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
+		//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
+		//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+	);
+}
+```
+

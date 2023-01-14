@@ -63,9 +63,20 @@ Atest_muti_4Character::Atest_muti_4Character():
 	if (auto OnlineSubsystem = IOnlineSubsystem::Get())
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
-		MyLOG::ScreenLog(OnlineSubsystem->GetSubsystemName().ToString());
-		UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Found Online subsystem %s"),
-		       *OnlineSubsystem->GetSubsystemName().ToString());
+		if (GEngine)
+		{
+			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
+			GEngine->AddOnScreenDebugMessage(
+				-1, //暂时不清楚作用
+				15.f, //消息持续时间
+				FColor::Blue, //消息颜色
+				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
+				//Printf的函数签名返回值类型不是void 而是FString
+				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
+				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
+				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+			);
+		}
 	}
 }
 
@@ -130,10 +141,38 @@ void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWas
 {
 	if (bWasSuccessful)
 	{
+		if (GEngine)
+		{
+			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
+			GEngine->AddOnScreenDebugMessage(
+				-1, //暂时不清楚作用
+				15.f, //消息持续时间
+				FColor::Blue, //消息颜色
+				FString::Printf(TEXT("Create Session: %s Success"), *SessionName.ToString())
+				//Printf的函数签名返回值类型不是void 而是FString
+				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
+				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
+				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+			);
+		}
 		UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
 	}
 	else
 	{
+		if (GEngine)
+		{
+			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
+			GEngine->AddOnScreenDebugMessage(
+				-1, //暂时不清楚作用
+				15.f, //消息持续时间
+				FColor::Blue, //消息颜色
+				FString::Printf(TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"))
+				//Printf的函数签名返回值类型不是void 而是FString
+				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
+				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
+				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+			);
+		}
 		UE_LOG(LogOnlineSubsystemSteam, Warning,
 		       TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));
 	}
