@@ -63,11 +63,12 @@ Atest_muti_4Character::Atest_muti_4Character():
 	if (auto OnlineSubsystem = IOnlineSubsystem::Get())
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+
 		if (GEngine)
 		{
 			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
 			GEngine->AddOnScreenDebugMessage(
-				-1, //暂时不清楚作用
+				-2, //暂时不清楚作用
 				15.f, //消息持续时间
 				FColor::Blue, //消息颜色
 				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
@@ -111,18 +112,16 @@ void Atest_muti_4Character::CreateGameSession()
 	//will call when pressing the 1 key
 	if (OnlineSessionInterface == nullptr)
 	{
-		UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is NULLptr in CreateGameSession."))
+		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is NULLptr in CreateGameSession."))*/
 		return;
 	}
 	if (!OnlineSessionInterface.IsValid())
 	{
-		UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))
+		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))*/
 		return;
 	}
-	if (auto ExistSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession) != nullptr)
+	if (OnlineSessionInterface->GetNamedSession(NAME_GameSession) != nullptr)
 	{
-		UE_LOG(LogOnlineSubsystemSteam, Warning,
-		       TEXT("OnlineSessionInterface: Session HAVE existed, it may indicate a muti-thread problem."))
 		OnlineSessionInterface->DestroySession(NAME_GameSession);
 	}
 	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
@@ -133,8 +132,8 @@ void Atest_muti_4Character::CreateGameSession()
 	SessionSettings->bAllowJoinViaPresence = true;
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
-	OnlineSessionInterface->CreateSession(*GetWorld()->GetFirstLocalPlayerFromController()->GetPreferredUniqueNetId(),
-	                                      NAME_GameSession, *SessionSettings);
+	const auto LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
 }
 
 void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -143,38 +142,30 @@ void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWas
 	{
 		if (GEngine)
 		{
-			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
+		
 			GEngine->AddOnScreenDebugMessage(
-				-1, //暂时不清楚作用
-				15.f, //消息持续时间
-				FColor::Blue, //消息颜色
+				-3, 
+				15.f,
+				FColor::Blue, 
 				FString::Printf(TEXT("Create Session: %s Success"), *SessionName.ToString())
-				//Printf的函数签名返回值类型不是void 而是FString
-				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
-				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
-				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+			
 			);
 		}
-		UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
+		//UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
 	}
 	else
 	{
 		if (GEngine)
 		{
-			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
 			GEngine->AddOnScreenDebugMessage(
-				-1, //暂时不清楚作用
-				15.f, //消息持续时间
-				FColor::Blue, //消息颜色
-				FString::Printf(TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"))
-				//Printf的函数签名返回值类型不是void 而是FString
-				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
-				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
-				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
+				-4,
+				15.f, 
+				FColor::Red,
+				FString(TEXT("Create Session UNCompleted."))
 			);
 		}
-		UE_LOG(LogOnlineSubsystemSteam, Warning,
-		       TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));
+		/*UE_LOG(LogOnlineSubsystemSteam, Warning,
+		       TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));*/
 	}
 }
 
