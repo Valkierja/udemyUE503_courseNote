@@ -9,8 +9,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "Kismet/ImportanceSamplingLibrary.h"
-#include "MyUtility/MyLOG.h"
+
 //////////////////////////////////////////////////////////////////////////
 ///
 
@@ -60,25 +61,30 @@ Atest_muti_4Character::Atest_muti_4Character():
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
-	if (auto OnlineSubsystem = IOnlineSubsystem::Get())
+	auto OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
-
 		if (GEngine)
 		{
-			//检查GEngine是否存在, 虽然我也不知道什么情况下会不存在
 			GEngine->AddOnScreenDebugMessage(
-				-2, //暂时不清楚作用
-				15.f, //消息持续时间
-				FColor::Blue, //消息颜色
+				-1,
+				15.f,
+				FColor::Blue,
 				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
-				//Printf的函数签名返回值类型不是void 而是FString
-				//GetSubsystemName() getXXXName 返回的是FName 所以需要ToString转换成FString
-				//但是由于被Printf接收格式化参数, 所以需要转换成C-style, 前面加个dereference
-				//Printf会将格式化后的结果输出一个FString类型的字符串作为参数传递给AddOnScreenDebugMessage
 			);
 		}
 	}
+	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+	SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	SessionSettings->bIsLANMatch = false;
+	SessionSettings->NumPublicConnections = 4;
+	SessionSettings->bAllowJoinInProgress = true;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bShouldAdvertise = true;
+	SessionSettings->bUsesPresence = true;
+	LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -109,10 +115,8 @@ void Atest_muti_4Character::SetupPlayerInputComponent(class UInputComponent* Pla
 
 void Atest_muti_4Character::CreateGameSession()
 {
-	//will call when pressing the 1 key
 	if (OnlineSessionInterface == nullptr)
 	{
-		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is NULLptr in CreateGameSession."))*/
 		return;
 	}
 	if (!OnlineSessionInterface.IsValid())
@@ -120,19 +124,11 @@ void Atest_muti_4Character::CreateGameSession()
 		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))*/
 		return;
 	}
-	if (OnlineSessionInterface->GetNamedSession(NAME_GameSession) != nullptr)
+	auto ExistingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExistingSession != nullptr)
 	{
 		OnlineSessionInterface->DestroySession(NAME_GameSession);
 	}
-	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
-	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
-	SessionSettings->bIsLANMatch = false;
-	SessionSettings->NumPublicConnections = 4;
-	SessionSettings->bAllowJoinInProgress = true;
-	SessionSettings->bAllowJoinViaPresence = true;
-	SessionSettings->bShouldAdvertise = true;
-	SessionSettings->bUsesPresence = true;
-	const auto LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
 }
 
@@ -142,13 +138,11 @@ void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWas
 	{
 		if (GEngine)
 		{
-		
 			GEngine->AddOnScreenDebugMessage(
-				-3, 
+				-1,
 				15.f,
-				FColor::Blue, 
+				FColor::Blue,
 				FString::Printf(TEXT("Create Session: %s Success"), *SessionName.ToString())
-			
 			);
 		}
 		//UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
@@ -158,8 +152,8 @@ void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWas
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
-				-4,
-				15.f, 
+				-1,
+				15.f,
 				FColor::Red,
 				FString(TEXT("Create Session UNCompleted."))
 			);

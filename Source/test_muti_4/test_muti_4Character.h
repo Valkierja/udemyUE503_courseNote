@@ -7,7 +7,6 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
-#include "MyUtility/MyLOG.h"
 //TODO: always make sure generated.h is below every include
 #include "test_muti_4Character.generated.h"
 
@@ -25,22 +24,23 @@ class Atest_muti_4Character : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
 public:
 	Atest_muti_4Character();
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
-	
+
 	UFUNCTION(BlueprintCallable)
 	void openLobby();
 
 	UFUNCTION(BlueprintCallable)
 	void CallOpenLevel(const FString& Address);
-	
+
 	UFUNCTION(BlueprintCallable)
 	void CallClientTravel(const FString& Address);
-protected:
 
+protected:
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
 
@@ -75,19 +75,21 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	
-// onlie session
+
+	// onlie session
 public:
 	// Pointer to the online session interface 
-	 IOnlineSessionPtr OnlineSessionInterface;
+	IOnlineSessionPtr OnlineSessionInterface;
 
-protected://TODO: WHY protected
+protected: //TODO: WHY protected
 	UFUNCTION(BlueprintCallable)
 	void CreateGameSession();
 
 	//callback
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
-private:
-	 FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
-};
 
+private:
+	TSharedPtr<FOnlineSessionSettings> SessionSettings;
+	ULocalPlayer* LocalPlayer;
+	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
+};
