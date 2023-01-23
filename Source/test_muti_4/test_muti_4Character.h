@@ -84,12 +84,18 @@ public:
 protected: //TODO: WHY protected
 	UFUNCTION(BlueprintCallable)
 	void CreateGameSession();
+	
+	UFUNCTION(BlueprintCallable)
+	void JoinGameSession();
 
-	//callback
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnFindSessionComplete(bool bWasSuccessful);
 
 private:
 	TSharedPtr<FOnlineSessionSettings> SessionSettings;
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;//SessionSearchSettings
 	ULocalPlayer* LocalPlayer;
 	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
+
+	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
 };

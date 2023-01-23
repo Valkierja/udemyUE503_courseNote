@@ -20,7 +20,9 @@ DEFINE_LOG_CATEGORY(LogOnlineSubsystemSteam);
 
 Atest_muti_4Character::Atest_muti_4Character():
 	CreateSessionCompleteDelegate(
-		FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete))
+		FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete)),
+	FindSessionsCompleteDelegate(
+		FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionComplete))
 //@param userClass
 //@param callBackFunctionPointer
 {
@@ -65,6 +67,11 @@ Atest_muti_4Character::Atest_muti_4Character():
 	if (OnlineSubsystem)
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (OnlineSessionInterface.IsValid())
+		{
+			OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+			OnlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
+		}
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -75,7 +82,6 @@ Atest_muti_4Character::Atest_muti_4Character():
 			);
 		}
 	}
-	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
 	SessionSettings = MakeShareable(new FOnlineSessionSettings());
 	SessionSettings->bIsLANMatch = false;
 	SessionSettings->NumPublicConnections = 4;
@@ -84,7 +90,6 @@ Atest_muti_4Character::Atest_muti_4Character():
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
 	LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -113,55 +118,6 @@ void Atest_muti_4Character::SetupPlayerInputComponent(class UInputComponent* Pla
 	PlayerInputComponent->BindTouch(IE_Released, this, &Atest_muti_4Character::TouchStopped);
 }
 
-void Atest_muti_4Character::CreateGameSession()
-{
-	if (OnlineSessionInterface == nullptr)
-	{
-		return;
-	}
-	if (!OnlineSessionInterface.IsValid())
-	{
-		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))*/
-		return;
-	}
-	auto ExistingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
-	if (ExistingSession != nullptr)
-	{
-		OnlineSessionInterface->DestroySession(NAME_GameSession);
-	}
-	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
-}
-
-void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
-{
-	if (bWasSuccessful)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.f,
-				FColor::Blue,
-				FString::Printf(TEXT("Create Session: %s Success"), *SessionName.ToString())
-			);
-		}
-		//UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
-	}
-	else
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.f,
-				FColor::Red,
-				FString(TEXT("Create Session UNCompleted."))
-			);
-		}
-		/*UE_LOG(LogOnlineSubsystemSteam, Warning,
-		       TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));*/
-	}
-}
 
 void Atest_muti_4Character::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
@@ -229,5 +185,85 @@ void Atest_muti_4Character::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+void Atest_muti_4Character::CreateGameSession()
+{
+	if (OnlineSessionInterface == nullptr)
+	{
+		return;
+	}
+	if (!OnlineSessionInterface.IsValid())
+	{
+		/*UE_LOG(LogOnlineSubsystemSteam, Error, TEXT("OnlineSessionInterface is not Valid in CreateGameSession."))*/
+		return;
+	}
+	auto ExistingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExistingSession != nullptr)
+	{
+		OnlineSessionInterface->DestroySession(NAME_GameSession);
+	}
+	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
+}
+
+void Atest_muti_4Character::JoinGameSession()
+{
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->bIsLanQuery = false;
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE,true,EOnlineComparisonOp::Equals);
+	OnlineSessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+}
+
+void Atest_muti_4Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Blue,
+				FString::Printf(TEXT("Create Session: %s Success"), *SessionName.ToString())
+			);
+		}
+		//UE_LOG(LogOnlineSubsystemSteam, Warning, TEXT("Create Session: %s Success"), *SessionName.ToString());
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Red,
+				FString(TEXT("Create Session UNCompleted."))
+			);
+		}
+		/*UE_LOG(LogOnlineSubsystemSteam, Warning,
+			   TEXT("Create Session UNCompleted. But OnCreateSessionComplete Callback WAS CALLED"));*/
+	}
+}
+
+void Atest_muti_4Character::OnFindSessionComplete(bool bWasSuccessful)
+{
+	for (auto ResultItem : SessionSearch->SearchResults)
+	{
+		FString Id = ResultItem.GetSessionIdStr();
+		FString User = ResultItem.Session.OwningUserName;
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1, 15.f, FColor::Cyan,
+				FString::Printf(TEXT("OnFindSessionComplete:: ID: %s, User: %s"), *Id, *User)
+			);
+		}
 	}
 }
